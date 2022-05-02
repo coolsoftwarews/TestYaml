@@ -11,35 +11,19 @@ pool:
   vmImage: 'ubuntu-latest'
 
 variables:
-  solution: '**/*.sln'
-  buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
 steps:
-- task: NuGetToolInstaller@1
+- script: dotnet build --configuration $(buildConfiguration)
+  displayName: 'dotnet build $(buildConfiguration)'
+- task: DotNetCoreCLI@2
+  inputs:
+    command: 'publish'
+    publishWebProjects: true
 
-- task: NuGetCommand@2
+- task: AzureWebApp@1
   inputs:
-    restoreSolution: '$(solution)'
-
-- task: VSBuild@1
-  inputs:
-    solution: '$(solution)'
-    msbuildArgs: '/p:DeployOnBuild=true /p:WebPublishMethod=Package /p:PackageAsSingleFile=true /p:SkipInvalidConfigurations=true /p:DesktopBuildPackageLocation="$(build.artifactStagingDirectory)\WebApp.zip" /p:DeployIisAppPath="Default Web Site"'
-    platform: '$(buildPlatform)'
-    configuration: '$(buildConfiguration)'
-
-- task: PublishBuildArtifacts@1
-  inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-    ArtifactName: 'drop'
-    publishLocation: 'Container'
-    
-- task: AzureRmWebAppDeployment@4
-  inputs:
-    ConnectionType: 'AzureRM'
     azureSubscription: 'Full Stack Nuggets (d919b9fc-efc6-42dc-b5f3-14823609b397)'
     appType: 'webAppLinux'
-    WebAppName: 'fsn-demo-yaml'
-    packageForLinux: '$(Build.ArtifactStagingDirectory)/**/*.zip'
-    RuntimeStack: 'DOTNETCORE|6.0'
+    appName: 'fsn-demo-yaml'
+    package: '$(System.DefaultWorkingDirectory)/**/*.zip'
